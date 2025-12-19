@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Cryptography Toolkit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+        }
+
+        .cipher-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .cipher-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .cipher-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border-left: 5px solid #3498db;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .button-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .encrypt-btn, .decrypt-btn, .demo-btn {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .decrypt-btn {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .demo-btn {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+        }
+
+        .encrypt-btn:hover, .decrypt-btn:hover, .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .output-section {
+            background: #2c3e50;
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .output-section h3 {
+            margin-bottom: 15px;
+            color: #ecf0f1;
+        }
+
+        .output-text {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            line-height: 1.6;
+            min-height: 60px;
+            border: 2px solid #4a5f7a;
+        }
+
+        .steps-section {
+            background: #ecf0f1;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #e74c3c;
+        }
+
+        .steps-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .step {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .visual-demo {
+            background: linear-gradient(135deg, #ff9a56, #ff6b95);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .char-mapping {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .char-pair {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .info-box h4 {
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .cipher-tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🔐 Interactive Cryptography Toolkit</h1>
+        <p>Explore Classical Encryption Algorithms with Visual Demonstrations</p>
+    </div>
+
+    <div class="cipher-tabs">
+        <button class="tab-btn active" onclick="showCipher('caesar')">Caesar Cipher</button>
+        <button class="tab-btn" onclick="showCipher('playfair')">Playfair Cipher</button>
+        <button class="tab-btn" onclick="showCipher('hill')">Hill Cipher</button>
+        <button class="tab-btn" onclick="showCipher('frequency')">Frequency Analysis</button>
+    </div>
+
+    <!-- Caesar Cipher Tab -->
+    <div id="caesar" class="cipher-content active">
+        <div class="info-box">
+            <h4>📚 About Caesar Cipher</h4>
+            <p>The Caesar cipher is one of the simplest and most widely known encryption techniques. Each letter is shifted by a fixed number of positions in the alphabet. Named after Julius Caesar who used it for his private correspondence.</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="caesar-text">Enter Text to Encrypt/Decrypt:</label>
+                <textarea id="caesar-text" placeholder="Type your message here...">HELLO WORLD</textarea>
+            </div>
+            <div class="input-group">
+                <label for="caesar-shift">Shift Value (1-25):</label>
+                <input type="number" id="caesar-shift" min="1" max="25" value="3">
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="encrypt-btn" onclick="caesarEncrypt()">🔒 Encrypt</button>
+            <button class="decrypt-btn" onclick="caesarDecrypt()">🔓 Decrypt</button>
+            <button class="demo-btn" onclick="caesarDemo()">🎯 Show Demo</button>
+        </div>
+
+        <div class="output-section">
+            <h3>📤 Result:</h3>
+            <div id="caesar-output" class="output-text">Your result will appear here...</div>
+        </div>
+
+        <div id="caesar-visual" class="visual-demo" style="display: none;">
+            <h3>🔍 Visual Mapping</h3>
+            <div id="caesar-mapping" class="char-mapping"></div>
+        </div>
+
+        <div class="steps-section">
+            <h3>📋 Step-by-Step Process:</h3>
+            <div id="caesar-steps">
+                <div class="step">1. Choose your shift value (key)</div>
+                <div class="step">2. For each letter, shift it forward/backward in the alphabet</div>
+                <div class="step">3. Wrap around if you go past Z (back to A)</div>
+                <div class="step">4. Keep spaces and punctuation unchanged</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Playfair Cipher Tab -->
+    <div id="playfair" class="cipher-content">
+        <div class="info-box">
+            <h4>📚 About Playfair Cipher</h4>
+            <p>The Playfair cipher encrypts pairs of letters (digraphs) using a 5×5 grid of letters. It was invented in 1854 and was used extensively in World War I and II. Much more secure than simple substitution ciphers.</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="playfair-text">Enter Text to Encrypt/Decrypt:</label>
+                <textarea id="playfair-text" placeholder="Type your message here...">HELLO WORLD</textarea>
+            </div>
+            <div class="input-group">
+                <label for="playfair-key">Keyword:</label>
+                <input type="text" id="playfair-key" value="KEYWORD" placeholder="Enter keyword">
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="encrypt-btn" onclick="playfairEncrypt()">🔒 Encrypt</button>
+            <button class="decrypt-btn" onclick="playfairDecrypt()">🔓 Decrypt</button>
+            <button class="demo-btn" onclick="playfairDemo()">🎯 Show Demo</button>
+        </div>
+
+        <div class="output-section">
+            <h3>📤 Result:</h3>
+            <div id="playfair-output" class="output-text">Your result will appear here...</div>
+        </div>
+
+        <div id="playfair-visual" class="visual-demo" style="display: none;">
+            <h3>🔍 Playfair Grid</h3>
+            <div id="playfair-grid"></div>
+        </div>
+
+        <div class="steps-section">
+            <h3>📋 Step-by-Step Process:</h3>
+            <div id="playfair-steps">
+                <div class="step">1. Create 5×5 grid with keyword + remaining alphabet</div>
+                <div class="step">2. Group text into pairs (digraphs)</div>
+                <div class="step">3. Apply Playfair rules for each pair</div>
+                <div class="step">4. Same row: move right; Same column: move down; Rectangle: swap columns</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hill Cipher Tab -->
+    <div id="hill" class="cipher-content">
+        <div class="info-box">
+            <h4>📚 About Hill Cipher</h4>
+            <p>The Hill cipher uses linear algebra and matrix multiplication for encryption. Invented by Lester S. Hill in 1929, it was the first polygraphic cipher that could operate on more than three symbols at once.</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="hill-text">Enter Text to Encrypt/Decrypt:</label>
+                <textarea id="hill-text" placeholder="Type your message here...">HELLO</textarea>
+            </div>
+            <div class="input-group">
+                <label for="hill-key">Key Matrix (2x2, comma-separated):</label>
+                <input type="text" id="hill-key" value="3,2,5,7" placeholder="e.g., 3,2,5,7">
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="encrypt-btn" onclick="hillEncrypt()">🔒 Encrypt</button>
+            <button class="decrypt-btn" onclick="hillDecrypt()">🔓 Decrypt</button>
+            <button class="demo-btn" onclick="hillDemo()">🎯 Show Demo</button>
+        </div>
+
+        <div class="output-section">
+            <h3>📤 Result:</h3>
+            <div id="hill-output" class="output-text">Your result will appear here...</div>
+        </div>
+
+        <div id="hill-visual" class="visual-demo" style="display: none;">
+            <h3>🔍 Matrix Operations</h3>
+            <div id="hill-matrix"></div>
+        </div>
+
+        <div class="steps-section">
+            <h3>📋 Step-by-Step Process:</h3>
+            <div id="hill-steps">
+                <div class="step">1. Convert letters to numbers (A=0, B=1, ...)</div>
+                <div class="step">2. Group into blocks matching key matrix size</div>
+                <div class="step">3. Multiply each block by the key matrix</div>
+                <div class="step">4. Apply modulo 26 and convert back to letters</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Frequency Analysis Tab -->
+    <div id="frequency" class="cipher-content">
+        <div class="info-box">
+            <h4>📚 About Frequency Analysis</h4>
+            <p>Frequency analysis is a cryptanalysis technique that studies the frequency of letters or groups of letters in encrypted text. It's particularly effective against simple substitution ciphers like Caesar cipher.</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="freq-text">Enter Text to Analyze:</label>
+                <textarea id="freq-text" placeholder="Paste encrypted text here...">KHOOR ZRUOG</textarea>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="demo-btn" onclick="analyzeFrequency()">📊 Analyze Frequency</button>
+            <button class="encrypt-btn" onclick="suggestCaesarKey()">🔍 Suggest Caesar Key</button>
+        </div>
+
+        <div class="output-section">
+            <h3>📊 Frequency Analysis Results:</h3>
+            <div id="frequency-output" class="output-text">Analysis will appear here...</div>
+        </div>
+
+        <div id="frequency-visual" class="visual-demo" style="display: none;">
+            <h3>📈 Frequency Chart</h3>
+            <div id="frequency-chart"></div>
+        </div>
+
+        <div class="steps-section">
+            <h3>📋 How Frequency Analysis Works:</h3>
+            <div>
+                <div class="step">1. Count occurrences of each letter in the ciphertext</div>
+                <div class="step">2. Compare with expected English letter frequencies</div>
+                <div class="step">3. Most frequent cipher letter likely represents 'E' (most common in English)</div>
+                <div class="step">4. Use pattern matching to deduce the encryption method</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tab switching functionality
+    function showCipher(cipherName) {
+        // Hide all cipher contents
+        const contents = document.querySelectorAll('.cipher-content');
+        contents.forEach(content => {
+            content.classList.remove('active');
+        });
+
+        // Remove active class from all tabs
+        const tabs = document.querySelectorAll('.tab-btn');
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Show selected cipher content
+        document.getElementById(cipherName).classList.add('active');
+
+        // Add active class to clicked tab
+        event.target.classList.add('active');
+    }
+
+    // Caesar Cipher Functions
+    function caesarEncrypt() {
+        const text = document.getElementById('caesar-text').value.toUpperCase();
+        const shift = parseInt(document.getElementById('caesar-shift').value);
+
+        let result = '';
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            if (char >= 'A' && char <= 'Z') {
+                result += String.fromCharCode(((char.charCodeAt(0) - 65 + shift) % 26) + 65);
+            } else {
+                result += char;
+            }
+        }
+
+        document.getElementById('caesar-output').textContent = result;
+        showCaesarSteps('encrypt', text, shift, result);
+    }
+
+    function caesarDecrypt() {
+        const text = document.getElementById('caesar-text').value.toUpperCase();
+        const shift = parseInt(document.getElementById('caesar-shift').value);
+
+        let result = '';
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            if (char >= 'A' && char <= 'Z') {
+                result += String.fromCharCode(((char.charCodeAt(0) - 65 - shift + 26) % 26) + 65);
+            } else {
+                result += char;
+            }
+        }
+
+        document.getElementById('caesar-output').textContent = result;
+        showCaesarSteps('decrypt', text, shift, result);
+    }
+
+    function caesarDemo() {
+        document.getElementById('caesar-text').value = 'HELLO WORLD';
+        document.getElementById('caesar-shift').value = 3;
+        caesarEncrypt();
+
+        // Show visual mapping
+        const visual = document.getElementById('caesar-visual');
+        visual.style.display = 'block';
+
+        const mapping = document.getElementById('caesar-mapping');
+        mapping.innerHTML = '';
+
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        for (let i = 0; i < 26; i++) {
+            const original = alphabet[i];
+            const shifted = alphabet[(i + 3) % 26];
+
+            const pair = document.createElement('div');
+            pair.className = 'char-pair';
+            pair.textContent = `${original} → ${shifted}`;
+            mapping.appendChild(pair);
+        }
+    }
+
+    function showCaesarSteps(operation, input, shift, output) {
+        const steps = document.getElementById('caesar-steps');
+        steps.innerHTML = `
+            <div class="step">1. Input: "${input}"</div>
+            <div class="step">2. Shift value: ${shift}</div>
+            <div class="step">3. Operation: ${operation === 'encrypt' ? 'Forward shift' : 'Backward shift'}</div>
+            <div class="step">4. Output: "${output}"</div>
+            <div class="step">5. Each letter moved ${shift} positions ${operation === 'encrypt' ? 'forward' : 'backward'} in alphabet</div>
+        `;
+    }
+
+    // Playfair Cipher Functions
+    function createPlayfairGrid(keyword) {
+        const alphabet = 'ABCDEFGHIKLMNOPQRSTUVWXYZ'; // J is omitted, combined with I
+        let grid = [];
+        let used = new Set();
+
+        // Add keyword letters first
+        for (let char of keyword.toUpperCase()) {
+            if (char === 'J') char = 'I';
+            if (alphabet.includes(char) && !used.has(char)) {
+                grid.push(char);
+                used.add(char);
+            }
+        }
+
+        // Add remaining letters
+        for (let char of alphabet) {
+            if (!used.has(char)) {
+                grid.push(char);
+            }
+        }
+
+        // Convert to 5x5 matrix
+        let matrix = [];
+        for (let i = 0; i < 5; i++) {
+            matrix.push(grid.slice(i * 5, (i + 1) * 5));
+        }
+
+        return matrix;
+    }
+
+    function playfairEncrypt() {
+        const text = document.getElementById('playfair-text').value.toUpperCase().replace(/[^A-Z]/g, '');
+        const keyword = document.getElementById('playfair-key').value;
+
+        const grid = createPlayfairGrid(keyword);
+
+        // Prepare text (split into digraphs)
+        let processedText = '';
+        for (let i = 0; i < text.length; i += 2) {
+            let pair = text.substr(i, 2);
+            if (pair.length === 1) pair += 'X';
+            if (pair[0] === pair[1]) pair = pair[0] + 'X' + pair[1];
+            processedText += pair;
+        }
+
+        let result = '';
+        // Encrypt each digraph
+        for (let i = 0; i < processedText.length; i += 2) {
+            const pair = processedText.substr(i, 2);
+            result += encryptPlayfairPair(pair, grid);
+        }
+
+        document.getElementById('playfair-output').textContent = result;
+        displayPlayfairGrid(grid);
+    }
+
+    function encryptPlayfairPair(pair, grid) {
+        const pos1 = findPosition(pair[0], grid);
+        const pos2 = findPosition(pair[1], grid);
+
+        if (pos1.row === pos2.row) {
+            // Same row - move right
+            return grid[pos1.row][(pos1.col + 1) % 5] + grid[pos2.row][(pos2.col + 1) % 5];
+        } else if (pos1.col === pos2.col) {
+            // Same column - move down
+            return grid[(pos1.row + 1) % 5][pos1.col] + grid[(pos2.row + 1) % 5][pos2.col];
+        } else {
+            // Rectangle - swap columns
+            return grid[pos1.row][pos2.col] + grid[pos2.row][pos1.col];
+        }
+    }
+
+    function findPosition(char, grid) {
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 5; j++) {
+                if (grid[i][j] === char) {
+                    return { row: i, col: j };
+                }
+            }
+        }
+    }
+
+    function displayPlayfairGrid(grid) {
+        const visual = document.getElementById('playfair-visual');
+        visual.style.display = 'block';
+
+        const gridDiv = document.getElementById('playfair-grid');
+        gridDiv.innerHTML = '';
+
+        const table = document.createElement('table');
+        table.style.margin = '0 auto';
+        table.style.borderCollapse = 'collapse';
+
+        for (let i = 0; i < 5; i++) {
+            const row = document.createElement('tr');
+            for (let j = 0; j < 5; j++) {
+                const cell = document.createElement('td');
+                cell.textContent = grid[i][j];
+                cell.style.border = '2px solid white';
+                cell.style.padding = '10px';
+                cell.style.textAlign = 'center';
+                cell.style.fontWeight = 'bold';
+                cell.style.fontSize = '18px';
+                row.appendChild(cell);
+            }
+            table.appendChild(row);
+        }
+
+        gridDiv.appendChild(table);
+    }
+
+    function playfairDecrypt() {
+        // Similar to encrypt but with reverse operations
+        document.getElementById('playfair-output').textContent = 'Decryption functionality - similar to encrypt but reverse operations';
+    }
+
+    function playfairDemo() {
+        document.getElementById('playfair-text').value = 'HELLO WORLD';
+        document.getElementById('playfair-key').value = 'KEYWORD';
+        playfairEncrypt();
+    }
+
+    // Hill Cipher Functions
+    function hillEncrypt() {
+        const text = document.getElementById('hill-text').value.toUpperCase().replace(/[^A-Z]/g, '');
+        const keyStr = document.getElementById('hill-key').value;
+
+        try {
+            const key = keyStr.split(',').map(x => parseInt(x.trim()));
+            if (key.length !== 4) throw new Error('Key must have 4 elements for 2x2 matrix');
+
+            const keyMatrix = [[key[0], key[1]], [key[2], key[3]]];
+
+            let result = '';
+            for (let i = 0; i < text.length; i += 2) {
+                let block = text.substr(i, 2);
+                if (block.length === 1) block += 'X';
+
+                const vector = [block.charCodeAt(0) - 65, block.charCodeAt(1) - 65];
+                const encrypted = matrixMultiply(keyMatrix, vector);
+
+                result += String.fromCharCode((encrypted[0] % 26) + 65);
+                result += String.fromCharCode((encrypted[1] % 26) + 65);
+            }
+
+            document.getElementById('hill-output').textContent = result;
+            showHillMatrix(keyMatrix, text, result);
+
+        } catch (error) {
+            document.getElementById('hill-output').textContent = 'Error: ' + error.message;
+        }
+    }
+
+    function matrixMultiply(matrix, vector) {
+        return [
+            matrix[0][0] * vector[0] + matrix[0][1] * vector[1],
+            matrix[1][0] * vector[0] + matrix[1][1] * vector[1]
+        ];
+    }
+
+    function showHillMatrix(keyMatrix, input, output) {
+        const visual = document.getElementById('hill-visual');
+        visual.style.display = 'block';
+
+        const matrixDiv = document.getElementById('hill-matrix');
+        matrixDiv.innerHTML = `
+            <p><strong>Key Matrix:</strong></p>
+            <div style="font-family: monospace; font-size: 18px; margin: 10px 0;">
+                [${keyMatrix[0][0]} ${keyMatrix[0][1]}]<br>
+                [${keyMatrix[1][0]} ${keyMatrix[1][1]}]
+            </div>
+            <p><strong>Input:</strong> ${input}</p>
+            <p><strong>Output:</strong> ${output}</p>
+        `;
+    }
+
+    function hillDecrypt() {
+        document.getElementById('hill-output').textContent = 'Hill cipher decryption requires matrix inversion (advanced topic)';
+    }
+
+    function hillDemo() {
+        document.getElementById('hill-text').value = 'HELLO';
+        document.getElementById('hill-key').value = '3,2,5,7';
+        hillEncrypt();
+    }
+
+    // Frequency Analysis Functions
+    function analyzeFrequency() {
+        const text = document.getElementById('freq-text').value.toUpperCase().replace(/[^A-Z]/g, '');
+
+        const freq = {};
+        for (let char of text) {
+            freq[char] = (freq[char] || 0) + 1;
+        }
+
+        const total = text.length;
+        const sortedFreq = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+
+        let output = 'Letter Frequencies:\n\n';
+        for (let [char, count] of sortedFreq) {
+            const percentage = ((count / total) * 100).toFixed(1);
+            output += `${char}: ${count} times (${percentage}%)\n`;
+        }
+
+        document.getElementById('frequency-output').textContent = output;
+        displayFrequencyChart(sortedFreq, total);
+    }
+
+    function displayFrequencyChart(freq, total) {
+        const visual = document.getElementById('frequency-visual');
+        visual.style.display = 'block';
+
+        const chartDiv = document.getElementById('frequency-chart');
+        chartDiv.innerHTML = '';
+
+        const maxCount = freq[0][1];
+
+        for (let [char, count] of freq) {
+            const percentage = ((count / total) * 100).toFixed(1);
+            const barWidth = (count / maxCount) * 100;
+
+            const bar = document.createElement('div');
+            bar.style.cssText = `
+                display: flex;
+                align-items: center;
+                margin: 5px 0;
+                font-family: monospace;
+            `;
+
+            bar.innerHTML = `
+                <span style="width: 30px; text-align: center; font-weight: bold;">${char}</span>
+                <div style="width: 200px; height: 20px; background: rgba(255,255,255,0.3); border-radius: 10px; margin: 0 10px; overflow: hidden;">
+                    <div style="width: ${barWidth}%; height: 100%; background: linear-gradient(45deg, #ff6b95, #ff9a56); border-radius: 10px;"></div>
+                </div>
+                <span>${count} (${percentage}%)</span>
+            `;
+
+            chartDiv.appendChild(bar);
+        }
+    }
+
+    function suggestCaesarKey() {
+        const text = document.getElementById('freq-text').value.toUpperCase().replace(/[^A-Z]/g, '');
+
+        if (text.length === 0) {
+            document.getElementById('frequency-output').textContent = 'Please enter some text first!';
+            return;
+        }
+
+        // Find most frequent letter
+        const freq = {};
+        for (let char of text) {
+            freq[char] = (freq[char] || 0) + 1;
+        }
+
+        const mostFrequent = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
+
+        // Assume most frequent letter is 'E' (most common in English)
+        const shift = (mostFrequent.charCodeAt(0) - 'E'.charCodeAt(0) + 26) % 26;
+
+        let output = `Frequency Analysis Suggestion:\n\n`;
+        output += `Most frequent letter: ${mostFrequent}\n`;
+        output += `Assuming it represents 'E', suggested Caesar shift: ${shift}\n\n`;
+        output += `Trying to decrypt with shift ${shift}:\n`;
+
+        // Try decrypting with suggested shift
+        let decrypted = '';
+        for (let char of text) {
+            if (char >= 'A' && char <= 'Z') {
+                decrypted += String.fromCharCode(((char.charCodeAt(0) - 65 - shift + 26) % 26) + 65);
+            } else {
+                decrypted += char;
+            }
+        }
+
+        output += decrypted;
+
+        document.getElementById('frequency-output').textContent = output;
+    }
+
+    // Initialize the application
+    window.onload = function() {
+        // Set default demo values
+        caesarDemo();
+    };
+</script>
+</body>
+</html>
+
+
